@@ -88,7 +88,11 @@ fastify.get('/api/v1/readyz', async (request, reply) => {
   }
 })
 
-const start = async () => {
+// Export fastify for serverless
+export { fastify };
+
+// Start function for local dev
+export const start = async () => {
   try {
     const port = Number(process.env.PORT) || 8080
     await fastify.listen({ port, host: '0.0.0.0' })
@@ -99,4 +103,5 @@ const start = async () => {
   }
 }
 
-start()
+// We rely on package.json scripts to call start() appropriately using a separate entry file
+
