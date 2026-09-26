@@ -1,0 +1,1 @@
+import { db } from './src/db/db'; import { sql } from 'drizzle-orm'; async function clear() { await db.run(sqlDELETE FROM visits); await db.run(sqlDELETE FROM installments); await db.run(sqlDELETE FROM expenses); await db.run(sqlDELETE FROM customers); console.log('Cleared successfully!'); process.exit(0); } clear();
