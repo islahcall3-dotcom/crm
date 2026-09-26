@@ -1,0 +1,27 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1789914319867,
+      "tag": "0000_uneven_susan_delgado",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1789988791391,
+      "tag": "0001_marvelous_goliath",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790415344819,
+      "tag": "0002_slippery_old_lace",
+      "breakpoints": true
+    }
+  ]
+}
