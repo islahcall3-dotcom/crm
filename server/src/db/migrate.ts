@@ -1,5 +1,5 @@
 import { migrate } from 'drizzle-orm/libsql/migrator';
-import { db } from './db';
+import { db } from './db.js';
 
 console.log('Running migrations...');
 migrate(db, { migrationsFolder: './src/db/migrations' }).then(() => {
