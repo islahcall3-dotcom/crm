@@ -1,4 +1,4 @@
-import { fastify } from '../server/src/server.ts';
+import { fastify } from '../server/dist/server.js';
 
 export default async function (req, res) {
   try {
