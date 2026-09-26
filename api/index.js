@@ -31,7 +31,7 @@ var index_source_exports = {};
 __export(index_source_exports, {
   default: () => index_source_default
 });
-module.exports = __toCommonJS(index_source_exports);
+module.exports = index_source_default;
 
 // server/src/server.ts
 var import_fastify = __toESM(require("fastify"), 1);
@@ -2198,3 +2198,4 @@ async function index_source_default(req, res) {
 Stack: ${err.stack}`);
   }
 }
+module.exports = index_source_default; 
