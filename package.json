@@ -1,0 +1,22 @@
+{
+  "name": "elgammal-crm",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "server",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w server\" \"npm run dev -w frontend\"",
+    "build": "npm run build --workspaces --if-present",
+    "verify": "npm run typecheck --workspaces --if-present && npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  },
+  "dependencies": {
+    "isomorphic-git": "^1.42.2",
+    "memfs": "^4.79.0"
+  }
+}
