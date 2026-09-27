@@ -6,6 +6,7 @@
     "node": "18.x"
   },
   "scripts": {
+    "start": "node glitch-start.js",
     "dev": "concurrently \"npm run dev -w server\" \"npm run dev -w frontend\"",
     "build": "npm run build --workspaces --if-present",
     "verify": "npm run typecheck --workspaces --if-present && npm run test --workspaces --if-present",
