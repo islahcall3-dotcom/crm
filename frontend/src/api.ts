@@ -5,7 +5,8 @@ export class ApiError extends Error {
 }
 
 export async function fetchApi(endpoint: string, options: RequestInit = {}) {
-  const baseUrl = import.meta.env.VITE_API_URL || '';
+  // @ts-ignore
+const baseUrl = import.meta.env.VITE_API_URL || '';
   const url = `${baseUrl}/api/v1${endpoint}`;
   const headers: Record<string, string> = {};
   if (options.body && typeof options.body === 'string') {
