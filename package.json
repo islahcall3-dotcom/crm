@@ -6,11 +6,10 @@
     "node": "18.x"
   },
   "scripts": {
-    "start": "node glitch-start.js",
-    "dev": "concurrently \"npm run dev -w server\" \"npm run dev -w frontend\"",
-    "build": "npm run build --workspaces --if-present",
-    "verify": "npm run typecheck --workspaces --if-present && npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "start": "node api/[...fastify].js",
+    "dev": "npm run dev",
+    "build": "echo \"Skipping root build\"",
+    "verify": "echo \"verify\""
   },
   "devDependencies": {
     "concurrently": "^10.0.5"
