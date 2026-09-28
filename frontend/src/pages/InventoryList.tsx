@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchApi } from '../api';
 import { Package, Plus, Search, AlertTriangle, ArrowDownRight, ArrowUpRight, Edit3, Trash2, CheckCircle, RefreshCw, X, Layers, DollarSign, Wrench, Droplets, BarChart3, Printer, Download, FileText, Sparkles } from 'lucide-react';
 import { matchesSearch } from '../utils/textUtils';
@@ -34,9 +35,17 @@ const STANDARD_CANDLES = [
 ];
 
 export default function InventoryList() {
-  const [items, setItems] = useState<InventoryItem[]>([]);
-  const [stats, setStats] = useState<InventoryStats>({ totalItems: 0, totalQuantity: 0, totalValue: 0, lowStockCount: 0 });
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  
+  const { data, isLoading: loading, refetch } = useQuery({
+    queryKey: ['inventory'],
+    queryFn: () => fetchApi('/inventory'),
+    refetchInterval: 5000,
+  });
+
+  const items: InventoryItem[] = data?.data || [];
+  const stats: InventoryStats = data?.stats || { totalItems: 0, totalQuantity: 0, totalValue: 0, lowStockCount: 0 };
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState<'all' | 'candle' | 'spare' | 'low'>('all');
   
@@ -63,24 +72,9 @@ export default function InventoryList() {
   const [adjustType, setAdjustType] = useState<'add' | 'subtract'>('add');
   const [adjusting, setAdjusting] = useState(false);
 
-  const loadItems = async () => {
-    setLoading(true);
-    try {
-      const res = await fetchApi('/inventory');
-      setItems(res.data || []);
-      if (res.stats) {
-        setStats(res.stats);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+  const loadItems = () => {
+    refetch();
   };
-
-  useEffect(() => {
-    loadItems();
-  }, []);
 
   const handleOpenAdd = () => {
     setEditingItem(null);
@@ -162,7 +156,7 @@ export default function InventoryList() {
         });
       }
       setIsAddEditOpen(false);
-      loadItems();
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
     } catch (err: any) {
       setModalError(err.message || 'حدث خطأ أثناء حفظ الصنف');
     } finally {
@@ -174,7 +168,7 @@ export default function InventoryList() {
     if (!confirm(`هل أنت متأكد من حذف الصنف "${item.itemName}" نهائياً من المخزن؟`)) return;
     try {
       await fetchApi(`/inventory/${item.id}`, { method: 'DELETE' });
-      loadItems();
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
     } catch (err: any) {
       alert(err.message || 'تعذر حذف الصنف');
     }
@@ -190,7 +184,7 @@ export default function InventoryList() {
         body: JSON.stringify({ adjustment: diff })
       });
       setAdjustModalItem(null);
-      loadItems();
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
     } catch (err: any) {
       alert(err.message || 'تعذر تعديل الرصيد');
     } finally {
@@ -291,7 +285,7 @@ export default function InventoryList() {
 
           <div className="flex items-center gap-2.5 w-full md:w-auto">
             <button 
-              onClick={loadItems}
+              onClick={() => loadItems()}
               className="p-3 bg-white hover:bg-blue-50 text-slate-700 rounded-2xl border-2 border-blue-200 hover:border-blue-400 transition-all shadow-xs"
               title="تحديث البيانات"
             >
