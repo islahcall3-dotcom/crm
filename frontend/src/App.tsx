@@ -1,17 +1,17 @@
-import React, { Suspense, lazy } from 'react';
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 
-const Home = lazy(() => import('./pages/Home'));
-const CustomersList = lazy(() => import('./pages/customers/CustomersList'));
-const CustomerProfile = lazy(() => import('./pages/customers/CustomerProfile'));
-const MaintenanceList = lazy(() => import('./pages/MaintenanceList'));
-const InventoryList = lazy(() => import('./pages/InventoryList'));
-const EmployeesList = lazy(() => import('./pages/EmployeesList'));
-const Reports = lazy(() => import('./pages/Reports'));
-const Settings = lazy(() => import('./pages/Settings'));
+import Home from './pages/Home';
+import CustomersList from './pages/customers/CustomersList';
+import CustomerProfile from './pages/customers/CustomerProfile';
+import MaintenanceList from './pages/MaintenanceList';
+import InventoryList from './pages/InventoryList';
+import EmployeesList from './pages/EmployeesList';
+import Reports from './pages/Reports';
+import Settings from './pages/Settings';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -31,18 +31,16 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function DashboardLayout() {
   return (
     <Dashboard>
-      <Suspense fallback={<div className="flex h-full items-center justify-center p-8 text-slate-400 font-bold">جاري تحميل الصفحة...</div>}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/customers" element={<CustomersList />} />
-          <Route path="/customers/:id" element={<CustomerProfile />} />
-          <Route path="/maintenance" element={<MaintenanceList />} />
-          <Route path="/inventory" element={<InventoryList />} />
-          <Route path="/employees" element={<EmployeesList />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/settings" element={<Settings />} />
-        </Routes>
-      </Suspense>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/customers" element={<CustomersList />} />
+        <Route path="/customers/:id" element={<CustomerProfile />} />
+        <Route path="/maintenance" element={<MaintenanceList />} />
+        <Route path="/inventory" element={<InventoryList />} />
+        <Route path="/employees" element={<EmployeesList />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/settings" element={<Settings />} />
+      </Routes>
     </Dashboard>
   );
 }
