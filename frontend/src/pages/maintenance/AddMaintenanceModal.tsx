@@ -29,7 +29,8 @@ export default function AddMaintenanceModal({ onClose, onSaved, customerIdOverri
     itemCalcium: false,
     itemInfrared: false,
     itemSalts: false,
-    notes: ''
+    notes: '',
+    deductInventory: true
   });
 
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -330,6 +331,21 @@ export default function AddMaintenanceModal({ onClose, onSaved, customerIdOverri
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Deduct Inventory Toggle */}
+            <div className="md:col-span-2 flex justify-center mt-2">
+              <label className="flex items-center gap-3 cursor-pointer select-none bg-white px-5 py-3 rounded-full border border-blue-200 shadow-sm transition-all hover:bg-blue-50">
+                <input 
+                  type="checkbox" 
+                  checked={formData.deductInventory} 
+                  onChange={() => handleCheckbox('deductInventory')} 
+                  className="w-5 h-5 text-blue-600 rounded-lg focus:ring-blue-500 accent-blue-600 cursor-pointer" 
+                />
+                <span className="font-black text-sm text-slate-800">
+                  هل تريد خصم هذه المواد من رصيد المخزن؟ (نعم / لا)
+                </span>
+              </label>
             </div>
 
             <div className="md:col-span-2">
