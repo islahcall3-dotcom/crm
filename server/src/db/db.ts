@@ -16,15 +16,15 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // If TURSO_DATABASE_URL is provided, use it. Otherwise fallback to local.
-const url = process.env.TURSO_DATABASE_URL || `libsql://dummy-fallback.turso.io`;
-const authToken = process.env.TURSO_AUTH_TOKEN;
+const url = (process.env.TURSO_DATABASE_URL || `libsql://dummy-fallback.turso.io`).trim();
+const authToken = process.env.TURSO_AUTH_TOKEN ? process.env.TURSO_AUTH_TOKEN.trim() : undefined;
 
 console.log('Connecting to database:', url.startsWith('libsql') ? '☁️ TURSO CLOUD' : '💻 LOCAL SQLITE');
 
 let client;
 try {
   client = createClient({ url, authToken });
-} catch (e) {
+} catch (e: any) {
   console.log('CRITICAL DB ERROR ON BOOT:', e.name, e.message);
   // Create a dummy client so the app doesn't crash on boot, but fails later gracefully
   client = createClient({ url: 'libsql://dummy.turso.io', authToken: 'dummy' });
