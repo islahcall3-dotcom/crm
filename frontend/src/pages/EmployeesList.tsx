@@ -14,7 +14,7 @@ type Employee = {
 
 export default function EmployeesList() {
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingAction, setLoadingAction] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterRole, setFilterRole] = useState<'all' | 'technician' | 'admin'>('all');
   
