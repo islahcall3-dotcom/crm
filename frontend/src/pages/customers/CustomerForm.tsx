@@ -39,18 +39,7 @@ export default function CustomerForm({
 
   const [nextMaintenanceDate, setNextMaintenanceDate] = useState('');
   
-  // Initial Visit fields
-  const [logInitialVisit, setLogInitialVisit] = useState(false);
-  const [visitData, setVisitData] = useState({
-    employeeId: '',
-    item1: true, 
-    item2: true, 
-    item3: true,
-    itemPost: false, 
-    itemCalcium: false, 
-    itemInfrared: false, 
-    itemSalts: false
-  });
+  // Initial Visit fields removed by user request
 
   // Zoom control
   const [formZoom, setFormZoom] = useState(() => {
@@ -64,12 +53,7 @@ export default function CustomerForm({
 
   useEffect(() => {
     Promise.all([
-      fetchApi('/lookups').then(setLookups),
-      fetchApi('/employees').then(res => {
-        const list = res.data || res;
-        // Filter properly by isTechnician
-        setTechnicians(list.filter((e: any) => e.isTechnician));
-      })
+      fetchApi('/lookups').then(setLookups)
     ]).catch(console.error);
   }, []);
 
@@ -168,26 +152,6 @@ export default function CustomerForm({
         newCustId = res.id;
       }
 
-      // Log initial visit if checked
-      if (logInitialVisit && newCustId && formData.lastMaintenanceDate) {
-        await fetchApi('/maintenance', {
-          method: 'POST',
-          body: JSON.stringify({
-            customerId: newCustId,
-            visitDate: formData.lastMaintenanceDate,
-            employeeId: visitData.employeeId || null,
-            item1: visitData.item1,
-            item2: visitData.item2,
-            item3: visitData.item3,
-            itemPost: visitData.itemPost,
-            itemCalcium: visitData.itemCalcium,
-            itemInfrared: visitData.itemInfrared,
-            itemSalts: visitData.itemSalts,
-            notes: 'زيارة تركيب وصيانة أولية مسجلة مع إنشاء العميل'
-          })
-        });
-      }
-
       onSaved();
     } catch (err: any) {
       setError(err.message || 'حدث خطأ أثناء حفظ بيانات العميل');
@@ -209,10 +173,6 @@ export default function CustomerForm({
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/[^0-9]/g, '');
     setFormData(prev => ({ ...prev, [e.target.name]: val }));
-  };
-
-  const handleVisitCheckbox = (name: string) => {
-    setVisitData(prev => ({ ...prev, [name]: !(prev as any)[name] }));
   };
 
   const availableCities = lookups.cities.filter((c: any) => c.governorateId === formData.governorateId);
@@ -559,118 +519,7 @@ export default function CustomerForm({
               </div>
             </div>
 
-            {/* ======================================================== */}
-            {/* SECTION 4: Initial Visit & Candle Deduction (Balanced Royal Blue Theme) */}
-            {/* ======================================================== */}
-            <div className="bg-gradient-to-br from-blue-50/40 via-white to-blue-50/20 rounded-3xl p-5 border border-blue-200/80 shadow-xs space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <label className="flex items-center gap-3 cursor-pointer select-none">
-                  <input 
-                    type="checkbox" 
-                    checked={logInitialVisit} 
-                    onChange={e => setLogInitialVisit(e.target.checked)} 
-                    className="w-5 h-5 text-blue-600 rounded-lg focus:ring-blue-500 accent-blue-600 cursor-pointer" 
-                  />
-                  <div>
-                    <span className="font-black text-sm text-slate-800">
-                      تسجيل وتوثيق زيارة صيانة أو تركيب أولى فورية مع إضافة العميل
-                    </span>
-                    <p className="text-[11px] text-blue-700 font-bold">
-                      يتم خصم الشمعات المحددة تلقائياً من رصيد المخزن وربطها باسم الفني المنفذ
-                    </p>
-                  </div>
-                </label>
-                
-                {logInitialVisit && (
-                  <div className="w-full sm:w-auto">
-                    <select 
-                      value={visitData.employeeId} 
-                      onChange={e => setVisitData({...visitData, employeeId: e.target.value})} 
-                      className="w-full sm:w-auto p-2 text-xs font-black border border-blue-200 rounded-xl outline-none bg-white min-w-[180px] text-blue-900 focus:border-blue-500"
-                    >
-                      <option value="">اختر الفني المسؤول...</option>
-                      {technicians.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                    </select>
-                  </div>
-                )}
-              </div>
 
-              {/* Cartridge Selection Grid */}
-              {logInitialVisit && (
-                <div className="pt-3 border-t border-blue-100 animate-in fade-in duration-200">
-                  <p className="text-xs font-black text-slate-700 mb-3 text-center">
-                    حدد الشمعات والمراحل المستبدلة أو المركبة الآن (تُخصم من المخزن تلقائياً):
-                  </p>
-                  
-                  <div className="space-y-2.5">
-                    {/* Row 1: شمعة أولى، شمعة ثانية، شمعة ثالثة، بوست كربون */}
-                    <div className="flex flex-wrap items-center justify-center gap-2.5">
-                      {[
-                        { id: 'item1', label: 'شمعة أولى' },
-                        { id: 'item2', label: 'شمعة ثانية' },
-                        { id: 'item3', label: 'شمعة ثالثة' },
-                        { id: 'itemPost', label: 'بوست كربون' },
-                      ].map(item => {
-                        const isChecked = Boolean((visitData as any)[item.id]);
-                        return (
-                          <label 
-                            key={item.id} 
-                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer select-none transition-all ${
-                              isChecked 
-                                ? 'border-2 border-blue-500 bg-blue-50 text-blue-950 font-black shadow-xs scale-[1.02]' 
-                                : 'border-slate-300 bg-white hover:border-slate-400 text-slate-800 font-bold'
-                            }`}
-                          >
-                            <input 
-                              type="checkbox" 
-                              checked={isChecked} 
-                              onChange={() => handleVisitCheckbox(item.id)} 
-                              className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
-                            />
-                            <span className="text-xs whitespace-nowrap">{item.label}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-
-                    {/* Row 2: كالسيوم (كالسيت)، انفراريد، أملاح (ممبرين) */}
-                    <div className="flex flex-wrap items-center justify-center gap-2.5">
-                      {[
-                        { id: 'itemCalcium', label: 'كالسيوم (كالسيت)' },
-                        { id: 'itemInfrared', label: 'انفراريد' },
-                        { id: 'itemSalts', label: 'أملاح (ممبرين)', isSalts: true },
-                      ].map(item => {
-                        const isChecked = Boolean((visitData as any)[item.id]);
-                        return (
-                          <label 
-                            key={item.id} 
-                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer select-none transition-all ${
-                              isChecked 
-                                ? item.isSalts
-                                   ? 'border-2 border-rose-500 bg-rose-50 text-rose-800 font-black shadow-xs scale-[1.02]'
-                                   : 'border-2 border-blue-500 bg-blue-50 text-blue-950 font-black shadow-xs scale-[1.02]' 
-                                : item.isSalts
-                                  ? 'border-slate-300 bg-white hover:border-rose-300 text-rose-600 font-bold'
-                                  : 'border-slate-300 bg-white hover:border-slate-400 text-slate-800 font-bold'
-                            }`}
-                          >
-                            <input 
-                              type="checkbox" 
-                              checked={isChecked} 
-                              onChange={() => handleVisitCheckbox(item.id)} 
-                              className={`w-4 h-4 rounded cursor-pointer ${item.isSalts ? 'accent-rose-600 text-rose-600' : 'accent-blue-600 text-blue-600'}`}
-                            />
-                            <span className={`text-xs whitespace-nowrap ${!isChecked && item.isSalts ? 'text-rose-600 font-bold' : ''}`}>
-                              {item.label}
-                            </span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
 
             {/* ======================================================== */}
             {/* SECTION 5: General Notes (Optional) */}
