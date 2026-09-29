@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { fetchApi } from '../api';
 import { 
@@ -20,14 +21,22 @@ export default function Home() {
   const [govViewMode, setGovViewMode] = useState<'bars' | 'distribution'>('bars');
   const [stageSortMode, setStageSortMode] = useState<'default' | 'highest'>('default');
 
-  useEffect(() => {
-    fetchApi('/dashboard').then(res => {
-      setData(res.data);
-      setLoading(false);
-    }).catch(console.error);
-  }, []);
+  const { data: dashboardData, isLoading: loading } = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: async () => {
+      const res = await fetchApi('/dashboard');
+      return res.data;
+    },
+    refetchInterval: 5000,
+  });
 
-  if (loading || !data) return (
+  useEffect(() => {
+    if (dashboardData) {
+      setData(dashboardData);
+    }
+  }, [dashboardData]);
+
+  if (loading && !data) return (
     <div className="p-12 text-center flex flex-col items-center justify-center min-h-[350px]">
       <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
       <p className="text-slate-700 font-black text-base">جاري تحميل لوحة التحكم الذكية...</p>
