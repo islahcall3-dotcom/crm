@@ -247,6 +247,7 @@ export default async function customerRoutes(fastify: FastifyInstance) {
       itemCalcium: visits.itemCalcium,
       itemInfrared: visits.itemInfrared,
       itemSalts: visits.itemSalts,
+      isBaseline: visits.isBaseline,
       notes: visits.notes
     })
     .from(visits)
