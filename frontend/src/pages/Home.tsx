@@ -15,7 +15,7 @@ import { formatDate } from '../utils/dateFormatter';
 export default function Home() {
   const { user } = useAuth();
   const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingAction, setLoadingAction] = useState(false);
 
   // SAS Visual Analytics Interactive Modes
   const [govViewMode, setGovViewMode] = useState<'bars' | 'distribution'>('bars');
