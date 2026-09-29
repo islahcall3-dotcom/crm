@@ -12,7 +12,7 @@ export default function MaintenanceList() {
   const [activeTab, setActiveTab] = useState<'today' | 'overdue' | 'upcoming' | 'history'>('today');
   const [tasks, setTasks] = useState<any[]>([]);
   const [stats, setStats] = useState({ today: 0, overdue: 0, upcoming: 0, history: 0 });
-  const [loading, setLoading] = useState(true);
+  const [loadingAction, setLoadingAction] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean | string>(false);
   const [searchQuery, setSearchQuery] = useState('');
 
