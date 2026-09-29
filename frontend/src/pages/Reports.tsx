@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { fetchApi } from '../api';
 import { 
   BarChart3, Users, Wrench, Droplets, Calendar, Clock, AlertTriangle, 
@@ -44,9 +45,9 @@ export default function Reports() {
   // Geography Tab internal search
   const [govSearchQuery, setGovSearchQuery] = useState('');
 
-  const loadReports = async () => {
-    setLoading(true);
-    try {
+  const { data: reportsData, isLoading: loading, refetch: loadReports } = useQuery({
+    queryKey: ['reports', selectedPeriod, customFrom, customTo, selectedTech, selectedGov, selectedFilterType, searchQuery],
+    queryFn: async () => {
       let queryParams = new URLSearchParams();
       if (selectedPeriod !== 'all' && selectedPeriod !== 'custom') {
         queryParams.append('period', selectedPeriod);
@@ -61,17 +62,16 @@ export default function Reports() {
       if (selectedFilterType) queryParams.append('filterTypeId', selectedFilterType);
 
       const res = await fetchApi(`/reports?${queryParams.toString()}`);
-      setData(res.data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res.data;
+    },
+    refetchInterval: 5000,
+  });
 
   useEffect(() => {
-    loadReports();
-  }, [selectedPeriod, customFrom, customTo, selectedTech, selectedGov, selectedFilterType]);
+    if (reportsData) {
+      setData(reportsData);
+    }
+  }, [reportsData]);
 
   // Debounced search for live typing
   useEffect(() => {
