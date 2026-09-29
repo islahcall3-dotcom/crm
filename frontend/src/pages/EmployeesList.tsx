@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { fetchApi } from '../api';
 import { Users, Plus, Search, X, UserCheck, Shield, CheckCircle, AlertCircle, Sparkles } from 'lucide-react';
 import { matchesSearch } from '../utils/textUtils';
@@ -24,21 +25,19 @@ export default function EmployeesList() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  const loadEmployees = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchApi(`/employees`);
-      setEmployees(data.data || []);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: employeesData, isLoading: loading, refetch: loadEmployees } = useQuery({
+    queryKey: ['employees'],
+    queryFn: async () => {
+      return fetchApi(`/employees`);
+    },
+    refetchInterval: 5000,
+  });
 
   useEffect(() => {
-    loadEmployees();
-  }, []);
+    if (employeesData) {
+      setEmployees(employeesData.data || []);
+    }
+  }, [employeesData]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
