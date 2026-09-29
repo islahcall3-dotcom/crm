@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { fetchApi } from '../api';
 import { CheckCircle, AlertTriangle, Calendar, Clock, Plus, Wrench, Search, X, Sparkles } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
@@ -26,22 +27,20 @@ export default function MaintenanceList() {
     }
   }, [location]);
 
-  const loadTasks = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchApi(`/maintenance?type=${activeTab}`);
-      setTasks(data.data || []);
-      if (data.stats) setStats(data.stats);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: maintenanceData, isLoading: loading, refetch: loadTasks } = useQuery({
+    queryKey: ['maintenance', activeTab],
+    queryFn: async () => {
+      return fetchApi(`/maintenance?type=${activeTab}`);
+    },
+    refetchInterval: 5000,
+  });
 
   useEffect(() => {
-    loadTasks();
-  }, [activeTab]);
+    if (maintenanceData) {
+      setTasks(maintenanceData.data || []);
+      if (maintenanceData.stats) setStats(maintenanceData.stats);
+    }
+  }, [maintenanceData]);
 
   // Filter tasks in real-time based on normalized search query
   const filteredTasks = useMemo(() => {
