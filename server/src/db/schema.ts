@@ -36,6 +36,7 @@ export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
   username: text('username').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
+  plainPassword: text('plain_password'),
   isActive: integer('is_active', { mode: 'boolean' }).default(true).notNull(),
   role: text('role').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
@@ -127,7 +128,7 @@ export const expenses = sqliteTable('expenses', {
 // 8. Inventory (المخزون)
 export const inventory = sqliteTable('inventory', {
   id: text('id').primaryKey(),
-  itemName: text('item_name').notNull().unique(),
+  itemName: text('item_name').notNull(),
   category: text('category').default('spare'),
   quantity: integer('quantity').notNull().default(0),
   unitPrice: real('unit_price').notNull().default(0),
