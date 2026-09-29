@@ -19,7 +19,7 @@ type ActiveReportTab = 'overview' | 'candles' | 'maintenance' | 'technicians' | 
 
 export default function Reports() {
   const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingAction, setLoadingAction] = useState(false);
   const [activeTab, setActiveTab] = useState<ActiveReportTab>('overview');
   const [companyProfile, setCompanyProfile] = useState<any>(null);
 
@@ -276,7 +276,7 @@ export default function Reports() {
 
         <div className="relative z-10 flex flex-wrap items-center gap-2.5 w-full md:w-auto">
           <button
-            onClick={loadReports}
+            onClick={() => loadReports()}
             className="p-3 bg-white hover:bg-blue-50 text-blue-700 rounded-2xl border border-blue-200 transition-all shadow-xs"
             title="تحديث البيانات لحظياً"
           >
