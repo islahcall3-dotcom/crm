@@ -124,6 +124,8 @@ export default function CustomerProfile() {
   const overdueDays = isOverdue ? Math.floor((new Date().getTime() - new Date(customer.nextMaintenanceDate).getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
   const lastVisit = customer.visits?.[0];
+  const normalVisits = customer.visits?.filter((v: any) => !v.isBaseline) || [];
+  const normalVisitsCount = normalVisits.length;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6 bg-slate-50/50 min-h-screen font-sans" dir="rtl">
@@ -278,7 +280,7 @@ export default function CustomerProfile() {
               </p>
             </div>
             <div className="bg-[#00796b]/90 text-white px-4 py-1.5 rounded-full text-xs font-black border border-white/25 shadow-xs flex items-center gap-1.5">
-              <span>زيارة منفذة رقم {customer.visits?.length || 1}</span>
+              <span>{lastVisit.isBaseline ? 'زيارة تأسيسية' : `زيارة منفذة رقم ${normalVisitsCount}`}</span>
             </div>
           </div>
           
@@ -310,9 +312,9 @@ export default function CustomerProfile() {
         <div className="mb-6">
           <h3 className="text-lg font-black text-slate-900 flex items-center gap-2 mb-1">
             <Clock className="text-blue-600" size={20} strokeWidth={2.5} />
-            <span>السجل التاريخي الشامل لكافة الزيارات الميدانية المنفذة ({customer.visits?.length || 0} زيارة)</span>
+            <span>السجل التاريخي الشامل لكافة الزيارات الميدانية المنفذة ({normalVisitsCount} زيارة)</span>
           </h3>
-          <p className="text-slate-500 text-xs font-bold mr-7">إمكانية التعديل وحذف أي زيارة من السجل التاريخي للعميل مباشرة</p>
+          <p className="text-slate-500 text-xs font-bold mr-7">الزيارات التأسيسية تظهر باللون الأخضر ولا تحتسب ضمن إجمالي زيارات الصيانة</p>
         </div>
         
         <div className="space-y-4">
@@ -322,16 +324,22 @@ export default function CustomerProfile() {
             </div>
           ) : (
             customer.visits.map((visit: any, idx: number) => (
-              <div key={visit.id} className="border border-slate-200/70 bg-slate-50/60 rounded-2xl p-5 space-y-3">
+              <div key={visit.id} className={`border ${visit.isBaseline ? 'border-emerald-200/70 bg-emerald-50/40' : 'border-slate-200/70 bg-slate-50/60'} rounded-2xl p-5 space-y-3`}>
                 <div className="flex flex-wrap md:flex-nowrap justify-between items-center gap-4">
                   <div className="flex items-center gap-3">
                     <div className="text-sm font-black text-slate-900 flex items-center gap-2">
-                      <span>تاريخ الزيارة المنفذة:</span>
-                      <span className="text-blue-900">{formatDate(visit.visitDate)}</span>
+                      <span>{visit.isBaseline ? 'تاريخ التأسيس والتركيب:' : 'تاريخ الزيارة المنفذة:'}</span>
+                      <span className={visit.isBaseline ? 'text-emerald-900' : 'text-blue-900'}>{formatDate(visit.visitDate)}</span>
                     </div>
-                    <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full text-xs font-black">
-                      زيارة #{customer.visits.length - idx}
-                    </span>
+                    {visit.isBaseline ? (
+                      <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full text-xs font-black">
+                        زيارة تأسيسية
+                      </span>
+                    ) : (
+                      <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full text-xs font-black">
+                        زيارة صيانة
+                      </span>
+                    )}
                   </div>
                   
                   <div className="flex items-center gap-3">
