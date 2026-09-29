@@ -118,12 +118,13 @@ export default async function customerRoutes(fastify: FastifyInstance) {
       }
     }
 
-    const results = await db.select().from(customers)
-      .where(and(...conditions))
-      .limit(limit).offset(offset).orderBy(desc(customers.createdAt));
-
-    const activeCountRes = await db.select({ count: sql`COUNT(*)` }).from(customers).where(eq(customers.isDeleted, false));
-    const archivedCountRes = await db.select({ count: sql`COUNT(*)` }).from(customers).where(eq(customers.isDeleted, true));
+    const [results, activeCountRes, archivedCountRes] = await Promise.all([
+      db.select().from(customers)
+        .where(and(...conditions))
+        .limit(limit).offset(offset).orderBy(desc(customers.createdAt)),
+      db.select({ count: sql`COUNT(*)` }).from(customers).where(eq(customers.isDeleted, false)),
+      db.select({ count: sql`COUNT(*)` }).from(customers).where(eq(customers.isDeleted, true))
+    ]);
       
     return { 
       data: results,
