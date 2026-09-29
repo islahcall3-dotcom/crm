@@ -151,53 +151,55 @@ export default async function maintenanceRoutes(fastify: FastifyInstance) {
     });
 
     // Auto-deduct changed candles & spare parts from Inventory
-    try {
-      const allInv = await db.select().from(inventory);
+    if (data.deductInventory !== false) {
+      try {
+        const allInv = await db.select().from(inventory);
 
-      // 1. Candles Mapping
-      const candleKeywords: Record<string, string[]> = {
-        item1: ['مرحلة 1', 'مرحلة أولى', 'أولى'],
-        item2: ['مرحلة 2', 'مرحلة ثانية', 'ثانية'],
-        item3: ['مرحلة 3', 'مرحلة ثالثة', 'ثالثة'],
-        itemSalts: ['مرحلة 4', 'ممبرين', 'أملاح'],
-        itemPost: ['مرحلة 5', 'بوست كربون', 'بوست'],
-        itemCalcium: ['مرحلة 6', 'كالسيت', 'كالسيوم'],
-        itemInfrared: ['مرحلة 7', 'إنفراريد', 'انفراريد']
-      };
+        // 1. Candles Mapping
+        const candleKeywords: Record<string, string[]> = {
+          item1: ['مرحلة 1', 'مرحلة أولى', 'أولى'],
+          item2: ['مرحلة 2', 'مرحلة ثانية', 'ثانية'],
+          item3: ['مرحلة 3', 'مرحلة ثالثة', 'ثالثة'],
+          itemSalts: ['مرحلة 4', 'ممبرين', 'أملاح'],
+          itemPost: ['مرحلة 5', 'بوست كربون', 'بوست'],
+          itemCalcium: ['مرحلة 6', 'كالسيت', 'كالسيوم'],
+          itemInfrared: ['مرحلة 7', 'إنفراريد', 'انفراريد']
+        };
 
-      for (const [key, keywords] of Object.entries(candleKeywords)) {
-        if (data[key]) {
-          const matched = allInv.find(inv => 
-            (inv.category === 'candle' || !inv.category) && 
-            keywords.some(kw => inv.itemName.includes(kw))
-          );
-          if (matched) {
-            console.log(`[INVENTORY DEDUCTION] Candle ${key} matched '${matched.itemName}'. Deducting 1 from stock.`);
-            await db.update(inventory).set({
-              quantity: sql`MAX(0, quantity - 1)`
-            }).where(eq(inventory.id, matched.id));
-          }
-        }
-      }
-
-      // 2. Spare parts deduction (if provided as an array of { id, quantity })
-      if (Array.isArray(data.spareParts)) {
-        for (const sp of data.spareParts) {
-          const partId = sp.id || sp.inventoryId;
-          const qty = Number(sp.quantity) || 1;
-          if (partId && qty > 0) {
-            const matchedPart = allInv.find(inv => inv.id === partId);
-            if (matchedPart) {
-              console.log(`[INVENTORY DEDUCTION] Spare part '${matchedPart.itemName}' used. Deducting ${qty} from stock.`);
+        for (const [key, keywords] of Object.entries(candleKeywords)) {
+          if (data[key]) {
+            const matched = allInv.find(inv => 
+              (inv.category === 'candle' || !inv.category) && 
+              keywords.some(kw => inv.itemName.includes(kw))
+            );
+            if (matched) {
+              console.log(`[INVENTORY DEDUCTION] Candle ${key} matched '${matched.itemName}'. Deducting 1 from stock.`);
               await db.update(inventory).set({
-                quantity: sql`MAX(0, quantity - ${qty})`
-              }).where(eq(inventory.id, matchedPart.id));
+                quantity: sql`MAX(0, quantity - 1)`
+              }).where(eq(inventory.id, matched.id));
             }
           }
         }
+
+        // 2. Spare parts deduction (if provided as an array of { id, quantity })
+        if (Array.isArray(data.spareParts)) {
+          for (const sp of data.spareParts) {
+            const partId = sp.id || sp.inventoryId;
+            const qty = Number(sp.quantity) || 1;
+            if (partId && qty > 0) {
+              const matchedPart = allInv.find(inv => inv.id === partId);
+              if (matchedPart) {
+                console.log(`[INVENTORY DEDUCTION] Spare part '${matchedPart.itemName}' used. Deducting ${qty} from stock.`);
+                await db.update(inventory).set({
+                  quantity: sql`MAX(0, quantity - ${qty})`
+                }).where(eq(inventory.id, matchedPart.id));
+              }
+            }
+          }
+        }
+      } catch (invErr) {
+        console.error('Error auto-deducting inventory for visit:', invErr);
       }
-    } catch (invErr) {
-      console.error('Error auto-deducting inventory for visit:', invErr);
     }
 
     // Update customer's next maintenance date
