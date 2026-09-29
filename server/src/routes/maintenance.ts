@@ -138,7 +138,7 @@ export default async function maintenanceRoutes(fastify: FastifyInstance) {
       employeeId: finalEmployeeId,
       visitDate: data.visitDate,
       workflowStatus: 'COMPLETED',
-      isBaseline: false,
+      isBaseline: data.isBaseline || false,
       item1: data.item1 || false,
       item2: data.item2 || false,
       item3: data.item3 || false,
