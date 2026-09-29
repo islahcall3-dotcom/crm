@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { fetchApi } from '../../api';
 import { Search, Plus, Edit, Eye, Archive, Trash2, Download, Upload, Columns, Users, RefreshCw, Wrench, Filter, RotateCcw, X, Sparkles } from 'lucide-react';
 import CustomerForm from './CustomerForm';
@@ -11,7 +12,6 @@ export default function CustomersList() {
   const navigate = useNavigate();
   
   const [customers, setCustomers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ active: 0, archived: 0 });
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -20,6 +20,7 @@ export default function CustomersList() {
   // Search and Filters
   const [isArchived, setIsArchived] = useState(false);
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [govId, setGovId] = useState('');
   const [cityId, setCityId] = useState('');
   const [filterTypeId, setFilterTypeId] = useState('');
@@ -34,6 +35,7 @@ export default function CustomersList() {
 
   const handleClearFilters = () => {
     setQuery('');
+    setDebouncedQuery('');
     setGovId('');
     setCityId('');
     setFilterTypeId('');
@@ -82,10 +84,18 @@ export default function CustomersList() {
     }
   }, [location]);
 
-  const loadCustomers = async () => {
-    setLoading(true);
-    try {
-      let url = `/customers?isArchived=${isArchived}&q=${encodeURIComponent(query)}`;
+  // Real-time debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const { data: customersData, isLoading: loading, refetch: loadCustomers } = useQuery({
+    queryKey: ['customers', isArchived, debouncedQuery, govId, cityId, filterTypeId, status, fromDate, toDate, dateType],
+    queryFn: async () => {
+      let url = `/customers?isArchived=${isArchived}&q=${encodeURIComponent(debouncedQuery)}`;
       if (govId) url += `&govId=${govId}`;
       if (cityId) url += `&cityId=${cityId}`;
       if (filterTypeId) url += `&filterTypeId=${filterTypeId}`;
@@ -93,32 +103,21 @@ export default function CustomersList() {
       if (fromDate) url += `&from=${fromDate}`;
       if (toDate) url += `&to=${toDate}`;
       if (dateType) url += `&dateType=${dateType}`;
-      
-      const data = await fetchApi(url);
-      setCustomers(data.data || []);
-      if (data.stats) setStats(data.stats);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+      return fetchApi(url);
+    },
+    refetchInterval: 5000,
+  });
+
+  useEffect(() => {
+    if (customersData) {
+      setCustomers(customersData.data || []);
+      if (customersData.stats) setStats(customersData.stats);
     }
-  };
-
-  useEffect(() => {
-    loadCustomers();
-  }, [isArchived, govId, cityId, filterTypeId, status, fromDate, toDate, dateType]);
-
-  // Real-time debounced search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      loadCustomers();
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [query]);
+  }, [customersData]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    loadCustomers();
+    setDebouncedQuery(query);
   };
 
   const toggleColumn = (col: keyof typeof visibleColumns) => {
@@ -458,7 +457,7 @@ export default function CustomersList() {
       </div>
 
       {/* Data Table */}
-      <div className="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-x-auto relative min-h-[400px]">
+      <div className="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-x-auto relative min-h-[400px] hidden md:block">
         <table className="w-full text-sm text-right whitespace-nowrap">
           <thead className="bg-gray-50 border-b border-gray-100 text-gray-600">
             <tr>
@@ -579,8 +578,71 @@ export default function CustomersList() {
               })
             )}
           </tbody>
-        </table>
-      </div>
+        </table></div>
+        {/* Mobile Cards View */}
+        <div className="md:hidden flex flex-col gap-4 mt-4">
+          {loading ? (
+             <div className="text-center p-10 text-gray-500 font-bold">جاري تحميل البيانات...</div>
+          ) : customers.length === 0 ? (
+             <div className="text-center p-10 text-gray-500 font-bold">لا يوجد عملاء.</div>
+          ) : (
+            customers.map((c: any) => {
+              const filter = lookups.filterTypes.find((f: any) => f.id === c.filterTypeId);
+              const interval = lookups.maintenanceIntervals.find((m: any) => m.id === c.maintenanceIntervalId);
+              const today = new Date().toISOString().split('T')[0];
+              const isOverdue = c.nextMaintenanceDate && c.nextMaintenanceDate < today;
+              
+              let statusBadge;
+              if (!c.nextMaintenanceDate) statusBadge = <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-lg text-xs font-black">غير محدد</span>;
+              else {
+                const diffDays = Math.ceil((new Date(c.nextMaintenanceDate).getTime() - new Date(today).getTime()) / (1000 * 60 * 60 * 24));
+                if (diffDays < 0) statusBadge = <span className="bg-red-100 text-red-700 px-3 py-1 rounded-lg text-xs font-black">متأخر ({Math.abs(diffDays)} يوم)</span>;
+                else if (diffDays === 0) statusBadge = <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-lg text-xs font-black animate-pulse">اليوم</span>;
+                else if (diffDays <= 7) statusBadge = <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-lg text-xs font-black">قريباً ({diffDays} يوم)</span>;
+                else statusBadge = <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-black">ساري</span>;
+              }
+
+              return (
+                <div key={c.id} className="bg-white p-5 rounded-3xl shadow-sm border border-slate-200/80 flex flex-col gap-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <h3 className="font-black text-lg text-slate-900 leading-tight">{c.name}</h3>
+                      <div className="text-slate-500 font-bold text-[13px] mt-1.5" dir="ltr">{c.phone1} {c.phone2 ? ` - ${c.phone2}` : ''}</div>
+                    </div>
+                    <div>{statusBadge}</div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    <div className="bg-slate-50/80 p-2.5 rounded-2xl border border-slate-100">
+                      <div className="text-[11px] text-slate-400 font-bold mb-0.5">نوع الفلتر</div>
+                      <div className="font-black text-sm text-slate-700">{filter ? filter.name : '---'}</div>
+                    </div>
+                    <div className="bg-slate-50/80 p-2.5 rounded-2xl border border-slate-100">
+                      <div className="text-[11px] text-slate-400 font-bold mb-0.5">دورية الصيانة</div>
+                      <div className="font-black text-sm text-slate-700">{interval ? `كل ${interval.months} شهور` : '---'}</div>
+                    </div>
+                    <div className="bg-blue-50/50 p-2.5 rounded-2xl border border-blue-100/50 col-span-2">
+                      <div className="text-[11px] text-slate-400 font-bold mb-0.5">الصيانة القادمة</div>
+                      <div className="font-black text-sm text-blue-700 flex items-center justify-between">
+                        {c.nextMaintenanceDate ? c.nextMaintenanceDate.split('T')[0] : '---'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 mt-2">
+                    <button onClick={() => navigate(`/customers/${c.id}`)} className="flex-1 py-2.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm text-sm">
+                      <Eye size={16} /> عرض
+                    </button>
+                    <button onClick={() => setEditingId(c.id)} className="flex-1 py-2.5 text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm text-sm">
+                      <Edit size={16} /> تعديل
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
 
       {isFormOpen && (
         <CustomerForm 
