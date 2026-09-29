@@ -39,8 +39,20 @@ export default function CustomerForm({
 
   const [nextMaintenanceDate, setNextMaintenanceDate] = useState('');
   
-  // Initial Visit fields removed by user request
+  const [initialVisit, setInitialVisit] = useState({
+    item1: true,
+    item2: true,
+    item3: true,
+    itemPost: true,
+    itemCalcium: true,
+    itemInfrared: false,
+    itemSalts: false,
+    notes: 'زيارة تركيب وصيانة أولية مسجلة مع إنشاء العميل'
+  });
 
+  const handleInitialVisitCheckbox = (name: string) => {
+    setInitialVisit(prev => ({ ...prev, [name]: !(prev as any)[name] }));
+  };
   // Zoom control
   const [formZoom, setFormZoom] = useState(() => {
     const saved = localStorage.getItem('appFormZoom');
@@ -143,13 +155,26 @@ export default function CustomerForm({
         payload.nextMaintenanceDate = nextMaintenanceDate;
       }
 
-      let newCustId = customerId;
-
       if (customerId) {
         await fetchApi(`/customers/${customerId}`, { method: 'PUT', body: JSON.stringify(payload) });
       } else {
         const res = await fetchApi('/customers', { method: 'POST', body: JSON.stringify(payload) });
-        newCustId = res.id;
+        let newCustId = res.id;
+        
+        // Create baseline visit if any items selected
+        if (Object.values(initialVisit).some(v => v === true)) {
+          await fetchApi('/maintenance', {
+            method: 'POST',
+            body: JSON.stringify({
+              customerId: newCustId,
+              employeeId: '',
+              visitDate: payload.lastMaintenanceDate || new Date().toISOString().split('T')[0],
+              ...initialVisit,
+              isBaseline: true,
+              deductInventory: false
+            })
+          });
+        }
       }
 
       onSaved();
@@ -517,6 +542,77 @@ export default function CustomerForm({
                   )}
                 </div>
               </div>
+
+              {/* Initial Visit Components for NEW CUSTOMERS ONLY */}
+              {!customerId && (
+                <div className="pt-4 mt-4 border-t border-slate-200/60">
+                  <h4 className="font-black text-slate-800 mb-3 flex items-center gap-2 text-sm">
+                    <Droplets size={18} className="text-blue-500" />
+                    الشمعات والمراحل المركبة (تأسيس بدون الخصم من المخزن وبدون احتسابها كزيارة):
+                  </h4>
+                  
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      {[
+                        { id: 'item1', label: 'شمعة أولى' },
+                        { id: 'item2', label: 'شمعة ثانية' },
+                        { id: 'item3', label: 'شمعة ثالثة' },
+                        { id: 'itemPost', label: 'بوست كربون' },
+                      ].map(item => {
+                        const isChecked = Boolean((initialVisit as any)[item.id]);
+                        return (
+                          <label 
+                            key={item.id} 
+                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer select-none transition-all ${
+                              isChecked 
+                                ? 'border-2 border-blue-500 bg-blue-50 text-blue-950 font-black shadow-xs' 
+                                : 'border-slate-300 bg-white hover:border-slate-400 text-slate-800 font-bold'
+                            }`}
+                          >
+                            <input 
+                              type="checkbox" 
+                              checked={isChecked} 
+                              onChange={() => handleInitialVisitCheckbox(item.id)} 
+                              className="hidden"
+                            />
+                            <span className="text-xs">{item.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2.5">
+                      {[
+                        { id: 'itemCalcium', label: 'كالسيوم (كالسيت)' },
+                        { id: 'itemInfrared', label: 'انفراريد' },
+                        { id: 'itemSalts', label: 'أملاح (ممبرين)', isSalts: true },
+                      ].map(item => {
+                        const isChecked = Boolean((initialVisit as any)[item.id]);
+                        return (
+                          <label 
+                            key={item.id} 
+                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border cursor-pointer select-none transition-all ${
+                              isChecked 
+                                ? item.isSalts
+                                  ? 'border-2 border-rose-500 bg-rose-50 text-rose-800 font-black shadow-xs'
+                                  : 'border-2 border-blue-500 bg-blue-50 text-blue-950 font-black shadow-xs' 
+                                : 'border-slate-300 bg-white hover:border-slate-400 text-slate-800 font-bold'
+                            }`}
+                          >
+                            <input 
+                              type="checkbox" 
+                              checked={isChecked} 
+                              onChange={() => handleInitialVisitCheckbox(item.id)} 
+                              className="hidden"
+                            />
+                            <span className="text-xs">{item.label}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
 
